@@ -4,19 +4,18 @@ const bitcoin = require('bitcoinjs-lib')
 const bitcoinMessage = require('bitcoinjs-message')
 const ztak = require('ztakio-core')
 const EventEmitter = require('events')
-const SERVER_URL = 'wss://hazamaapi.indiesquare.net/ztak'
+const SERVER_URL = process.argv.pop()
 const CB_TIMEOUT = 5000
-const WIF = fs.readFileSync('.wif', 'utf8').trim()
-const NETWORK = {
-  "messagePrefix": "\u0018Hazama Signed Message:\n",
-  "bech32": "haz",
-  "bip32": {
-    "public": "0x0488b21e",
-    "private": "0x0488ade4"
-  },
-  "H_pubKeyHash": 41,
-  "pubKeyHash": 100,
-  "wif": 149
+const WIF = fs.readFileSync('../.wif', 'utf8').trim()
+const NETWORK = secureLoadJson('.network', ztak.networks.mainnet)
+
+function secureLoadJson(file, def) {
+  try {
+    let data = fs.readFileSync(file, 'utf8')
+    return JSON.parse(data)
+  } catch (e) {
+    return def
+  }
 }
 
 function start() {
@@ -91,6 +90,7 @@ function start() {
     }
     let poaSignedTxs = {}
 
+    console.log(`Got ${mempool.length} transactions from the mempool, our address is ${address}`)
     for (let i=0; i < mempool.length; i++) {
       let txid = mempool[i]
       let txFeds = await send('core.get', [`/_/tx.${txid}.feds`])
@@ -112,6 +112,7 @@ function start() {
                 //let signature = ecpair.sign(Buffer.from(txid, 'hex'))
                 let signature = bitcoinMessage.sign(txid, ecpair.privateKey, ecpair.compressed)
                 poaSignedTxs[fed][txid] = [poaIdx, signature.toString('base64')]
+                console.log(`${i + 1}/${mempool.length} Included ${txid} from federation ${fed} on the new block`)
               }
             } else {
               // On the first "null" we bailout
@@ -141,8 +142,18 @@ function start() {
       let code = opcodes.join('\n')
       let byteCode = ztak.asm.compile(code)
       let hex = ztak.buildEnvelope(ecpair, byteCode).toString('hex')
-      console.log(`Submitting new block with ${Object.keys(poaSignedTxs).length} transactions`)
-      await send('core.block', [hex])
+      console.log(hex)
+      console.log(`Submitting new block with ${Object.keys(poaSignedTxs).length} transactions, ${hex.length} bytes`)
+
+      for (let i=0; i < 5; i++) {
+        try {
+          await send('core.block', [hex])
+          console.log('Block submitted')
+          break
+        } catch(e) {
+          console.log(`(${i+1}/5 tries) Error while submitting block:`, e)
+        }
+      }
     }
   }
 

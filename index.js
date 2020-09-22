@@ -169,9 +169,15 @@ function start() {
       }
     })
 
+    let mineTimeout
     events.on('event', async (keys) => {
       if (keys.filter(x => x === '/_/mempool').length > 0) {
-        await mine()
+        if (!mineTimeout) {
+          mineTimeout = setTimeout(async () => {
+            await mine()
+            mineTimeout = null
+          }, 1500)
+        }
       }
     })
 

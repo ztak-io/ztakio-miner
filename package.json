@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon index.js wss://hazamaapi.indiesquare.net/ztak",
+    "devLocal": "nodemon index.js ws://localhost:3041",
+    "devRemote": "nodemon index.js wss://hazamaapi.indiesquare.net/ztak",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
@@ -12,7 +13,7 @@
   "dependencies": {
     "bitcoinjs-message": "^2.1.1",
     "ws": "^7.3.1",
-    "ztakio-core": "0.0.7"
+    "ztakio-core": "0.0.14"
   },
   "devDependencies": {
     "nodemon": "^2.0.4"

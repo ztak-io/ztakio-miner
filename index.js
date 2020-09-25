@@ -206,7 +206,7 @@ function start() {
     const checkMempool = async () => {
       let mempool = await send('core.get', ['/_/mempool'])
       if (mempool && mempool.length > 0) {
-        //await mine(mempool)
+        await mine(mempool)
       }
     }
     checkMempool()

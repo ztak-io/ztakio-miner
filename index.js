@@ -182,17 +182,18 @@ function start() {
     })
 
     let mineTimeout
-    let waitPeriod = 1500
+    const defaultWaitPeriod = 1500
+    let waitPeriod = defaultWaitPeriod
     const doBlock = async () => {
       await mine()
-      mineTimeout = null
-      waitPeriod = 1500
+      mineTimeout = defaultWaitPeriod
+      waitPeriod = defaultWaitPeriod
     }
     let n = 0
     const tryMine = async (keys) => {
       if (keys && keys.filter(x => x === '/_/mempool').length > 0) {
         if (!mineTimeout) {
-          mineTimeout = setTimeout(doBlock, 1500)
+          mineTimeout = setTimeout(doBlock, defaultWaitPeriod)
         } else if (waitPeriod > 100){
           waitPeriod = Math.ceil(waitPeriod * 0.95)
           clearTimeout(mineTimeout)
